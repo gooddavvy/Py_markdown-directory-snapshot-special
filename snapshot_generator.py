@@ -15,8 +15,8 @@ def generate_markdown_snapshot(root_path, ignore_list):
 
     with open("output.md", "w", encoding="utf-8") as output_file:
         def should_ignore(path):
-            # Convert path to absolute path
-            abs_path = str(Path(path).resolve())
+            # Convert relative path to absolute path using root_path
+            abs_path = str(Path(root_path, path).resolve())
             
             for ignore in normalized_ignore_list:
                 if abs_path == ignore or str(abs_path).startswith(f"{ignore}{os.sep}"):
@@ -25,7 +25,7 @@ def generate_markdown_snapshot(root_path, ignore_list):
 
         for root, _, files in os.walk(root_path):
             rel_root = os.path.relpath(root, root_path)
-            if should_ignore(rel_root):
+            if rel_root != "." and should_ignore(rel_root):
                 continue
 
             for file in files:

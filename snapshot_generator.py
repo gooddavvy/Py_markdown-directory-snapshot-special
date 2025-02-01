@@ -43,7 +43,7 @@ def generate_markdown_snapshot(root_path, ignore_list, max_workers=8):
             with file_path.open('r', encoding='utf-8') as f:
                 content = f.read()
             rel_path = file_path.relative_to(root_path)
-            return f"### {rel_path}\n```\n{content}\n```\n\n"
+            return f"---FILESTART: {rel_path}---\n{content}\n---FILEEND---\n\n"
         except Exception as e:
             print(f"Warning: Could not read {file_path}: {e}")
             return ""

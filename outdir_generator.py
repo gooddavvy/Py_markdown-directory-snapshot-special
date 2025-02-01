@@ -13,26 +13,26 @@ def generate_outdir(dirname):
     except Exception as e:
         raise Exception(f"couldn't read input.md - did you forget to create it? ¯\\_(ツ)_/¯ : {str(e)}")
 
-    sections = content.split("### ")
+    # Split content by file markers
+    file_blocks = content.split("---FILESTART: ")
 
-    for section in sections[1:]:
-        parts = section.split("\n```\n", 1)
-        if len(parts) != 2:
-            continue
-
-        filename = parts[0].strip()
-        content = parts[1].split("```")[0]
-
-        full_path = os.path.join(dirname, filename)
-        parent_dir = os.path.dirname(full_path)
-
+    for block in file_blocks[1:]:  # Skip the first empty block
         try:
+            # Split into filename and content
+            filename, content = block.split("---\n", 1)
+            filename = filename.strip()
+            
+            # Extract content up to FILEEND marker
+            content = content.split("---FILEEND---")[0]
+
+            full_path = os.path.join(dirname, filename)
+            parent_dir = os.path.dirname(full_path)
+
+            # Create parent directories if they don't exist
             os.makedirs(parent_dir, exist_ok=True)
-        except Exception as e:
-            raise Exception(f"failed to create directories for {filename}: {str(e)} (ಥ﹏ಥ)")
 
-        try:
+            # Write the file
             with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
         except Exception as e:
-            raise Exception(f"failed to write file {filename}: {str(e)} (╯°□°）╯︵ ┻━┻")
+            raise Exception(f"failed to process file {filename}: {str(e)} (╯°□°）╯︵ ┻━┻")

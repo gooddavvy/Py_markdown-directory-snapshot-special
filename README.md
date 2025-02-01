@@ -20,10 +20,10 @@ Be sure to replace `your-module-name` with your actual module name.
 To create a snapshot of your directory:
 
 ```bash
-python main.py snapshot [your_root_path] [ignore_patterns...]
+python main.py snapshot [your_absolute_path] [ignore_patterns...]
 ```
 
-Replace `your-root-path` with the path to the directory you want to snapshot, and `ignore_patterns` with the files/directories you want to ignore.
+Replace `your_absolute_path` with the absolute path to the directory you want to snapshot, and `ignore_patterns` with the absolute paths of the files/directories you want to ignore.
 
 An `output.md` file will be created at the root level of this project, containing a snapshot of non-ignored files and their contents.
 

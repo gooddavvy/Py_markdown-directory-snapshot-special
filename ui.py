@@ -14,7 +14,6 @@ st.set_page_config(
     page_icon="📸"
 )
 
-# Optionally, inject some CSS to enforce a dark background and styled buttons
 st.markdown(
     """
     <style>
@@ -78,12 +77,9 @@ def display_directory_tree(root_path, indent=0, sort_files=True):
         default_value = False if entry in DEFAULT_IGNORED_NAMES else True
         indent_str = "&nbsp;" * 4 * indent  # for visual indentation in the label
         label = f"{indent_str}{entry}/" if os.path.isdir(full_path) else f"{indent_str}{entry}"
-        # Note: Although st.sidebar.checkbox does not support HTML in the label,
-        # the indentation is preserved here as plain text.
         checked = st.sidebar.checkbox(label, value=default_value, key=checkbox_key)
         if not checked:
             ignored_paths.append(os.path.abspath(full_path))
-        # If the entry is a directory, recursively list its contents inside an expander.
         if os.path.isdir(full_path):
             with st.sidebar.expander(f"{indent_str}Contents of {entry}"):
                 child_ignored = display_directory_tree(full_path, indent=indent+1, sort_files=sort_files)
@@ -113,27 +109,20 @@ st.sidebar.title("Directory Snapshot Tool")
 # the user enters a folder path manually.
 folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
 
-# Additional sidebar buttons; instead of experimental_rerun, we clear the checkbox states.
-col_buttons = st.sidebar.columns(3)
-with col_buttons[0]:
-    if st.button("Clear Files"):
-        clear_checkbox_states()
-with col_buttons[1]:
-    if st.button("Refresh"):
-        clear_checkbox_states()
-with col_buttons[2]:
-    # A placeholder for potential future functionality.
-    pass
+# Updated: Use full-width buttons by not placing them in columns.
+if st.sidebar.button("🗑️ Clear Selections"):
+    clear_checkbox_states()
+
+if st.sidebar.button("🔄 Refresh Tree"):
+    clear_checkbox_states()
 
 sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
 
-# If a valid folder path is provided, display the directory tree.
+
 if folder_path and os.path.isdir(folder_path):
     st.sidebar.markdown("### Directory Tree")
     tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files)
-    # Allow the user to add additional ignore patterns manually.
     manual_ignored = get_manual_ignore_list(folder_path)
-    # Final ignore list is the union of the tree-based and manually entered ignore items.
     final_ignore_list = list(set(tree_ignored + manual_ignored))
 else:
     st.sidebar.info("Please enter a valid folder path above.")
@@ -152,11 +141,9 @@ if st.button("Generate Snapshot"):
     else:
         with st.spinner("Generating snapshot..."):
             try:
-                # Call the snapshot generator from your existing module.
                 generate_markdown_snapshot(folder_path, final_ignore_list)
-                time.sleep(0.5)  # simulate processing delay if needed
+                time.sleep(0.5)
                 st.success("Snapshot created successfully!")
-                # Read and display the output.md contents.
                 try:
                     with open("output.md", "r", encoding="utf-8") as f:
                         snapshot_content = f.read()

@@ -3,6 +3,9 @@ import time
 import streamlit as st
 from snapshot_generator import generate_markdown_snapshot
 
+# --- Global variable to track checkbox keys ---
+checkbox_keys = []
+
 # --- Configuration & CSS for Dark Theme ---
 st.set_page_config(
     page_title="Directory Snapshot Tool",
@@ -42,11 +45,22 @@ DEFAULT_IGNORED_NAMES = {".git", "node_modules", "__pycache__", "venv", "dist", 
 
 # --- Helper Functions ---
 
+def clear_checkbox_states():
+    """
+    Clears the session state for all checkboxes by deleting their keys.
+    This forces the checkboxes to revert to their default values.
+    """
+    global checkbox_keys
+    for key in checkbox_keys:
+        if key in st.session_state:
+            del st.session_state[key]
+
 def display_directory_tree(root_path, indent=0, sort_files=True):
     """
     Recursively displays a directory tree with checkboxes in the sidebar.
     Returns a list of absolute paths that were unchecked.
     """
+    global checkbox_keys
     ignored_paths = []
     try:
         entries = os.listdir(root_path)
@@ -58,19 +72,18 @@ def display_directory_tree(root_path, indent=0, sort_files=True):
 
     for entry in entries:
         full_path = os.path.join(root_path, entry)
-        # Create a unique key for the checkbox (using full path)
         checkbox_key = full_path
+        checkbox_keys.append(checkbox_key)
         # Default value: if the entry name is one of the defaults, uncheck it (ignore it)
         default_value = False if entry in DEFAULT_IGNORED_NAMES else True
-        # Create an indentation string (using non-breaking spaces)
-        indent_str = "&nbsp;" * 4 * indent
-        # Use Markdown in the label to preserve spacing
+        indent_str = "&nbsp;" * 4 * indent  # for visual indentation in the label
         label = f"{indent_str}{entry}/" if os.path.isdir(full_path) else f"{indent_str}{entry}"
-        # Display the checkbox in the sidebar (using unsafe_allow_html to interpret the spaces)
+        # Note: Although st.sidebar.checkbox does not support HTML in the label,
+        # the indentation is preserved here as plain text.
         checked = st.sidebar.checkbox(label, value=default_value, key=checkbox_key)
         if not checked:
             ignored_paths.append(os.path.abspath(full_path))
-        # If directory, use an expander to list its children
+        # If the entry is a directory, recursively list its contents inside an expander.
         if os.path.isdir(full_path):
             with st.sidebar.expander(f"{indent_str}Contents of {entry}"):
                 child_ignored = display_directory_tree(full_path, indent=indent+1, sort_files=sort_files)
@@ -100,17 +113,16 @@ st.sidebar.title("Directory Snapshot Tool")
 # the user enters a folder path manually.
 folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
 
-# Additional sidebar buttons
+# Additional sidebar buttons; instead of experimental_rerun, we clear the checkbox states.
 col_buttons = st.sidebar.columns(3)
 with col_buttons[0]:
     if st.button("Clear Files"):
-        # Clearing selections by rerunning the app (which resets checkboxes to their default values)
-        st.experimental_rerun()
+        clear_checkbox_states()
 with col_buttons[1]:
     if st.button("Refresh"):
-        st.experimental_rerun()
+        clear_checkbox_states()
 with col_buttons[2]:
-    # A dummy button; sorting is handled via a checkbox below
+    # A placeholder for potential future functionality.
     pass
 
 sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
@@ -118,7 +130,6 @@ sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
 # If a valid folder path is provided, display the directory tree.
 if folder_path and os.path.isdir(folder_path):
     st.sidebar.markdown("### Directory Tree")
-    # The function returns a list of unchecked items (i.e. items to ignore)
     tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files)
     # Allow the user to add additional ignore patterns manually.
     manual_ignored = get_manual_ignore_list(folder_path)
@@ -135,7 +146,6 @@ Files and folders that are unchecked in the sidebar will be ignored.
 When you are ready, click the **Generate Snapshot** button below.
 """)
 
-# The "Generate Snapshot" button – wrapped in a container to allow styling if desired.
 if st.button("Generate Snapshot"):
     if not folder_path or not os.path.isdir(folder_path):
         st.error("Please provide a valid folder path before generating a snapshot.")
@@ -144,10 +154,9 @@ if st.button("Generate Snapshot"):
             try:
                 # Call the snapshot generator from your existing module.
                 generate_markdown_snapshot(folder_path, final_ignore_list)
-                # Pause briefly to simulate processing (if needed)
-                time.sleep(0.5)
+                time.sleep(0.5)  # simulate processing delay if needed
                 st.success("Snapshot created successfully!")
-                # Read and display the output.md contents in a markdown code block.
+                # Read and display the output.md contents.
                 try:
                     with open("output.md", "r", encoding="utf-8") as f:
                         snapshot_content = f.read()
@@ -158,7 +167,6 @@ if st.button("Generate Snapshot"):
             except Exception as e:
                 st.error(f"Error generating snapshot: {e}")
 
-# --- Additional Options (optional) ---
 with st.expander("About / Instructions"):
     st.markdown("""
     **Usage Instructions:**

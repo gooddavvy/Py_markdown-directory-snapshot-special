@@ -42,9 +42,11 @@ st.markdown(
 # --- Global Defaults ---
 DEFAULT_IGNORED_NAMES = {".git", "node_modules", "__pycache__", "venv", "dist", "build"}
 
+# --- Helper Functions ---
+
 def clear_checkbox_states():
     """
-    Clears the session state for all checkboxes.
+    Clears the session state for all checkboxes by deleting their keys.
     This forces the checkboxes to revert to their default values.
     """
     global checkbox_keys
@@ -52,33 +54,16 @@ def clear_checkbox_states():
         if key in st.session_state:
             del st.session_state[key]
 
-def display_directory_tree(root_path, ignore_set, indent=0, sort_files=True):
+def display_directory_tree(root_path, indent=0, sort_files=True):
     """
-    Displays a collapsible, checkbox-enabled tree view of the directory at `root_path`.
-    Returns a list of absolute paths that are unchecked (ignored).
+    Recursively displays a directory tree with checkboxes in the sidebar.
+    Each folder is rendered with a toggleable arrow (► when collapsed, ▼ when expanded)
+    so that its contents can be hidden or shown.
     
-    Parameters:
-    -----------
-    root_path: str or Path
-        The folder path to display.
-    ignore_set: set
-        A set of absolute paths that have already been marked as ignored
-        (either from a parent's checkbox or manually).
-    indent: int
-        Used to calculate indentation (number of 4-space increments).
-    sort_files: bool
-        Whether to sort folder entries A-Z.
+    Returns a list of absolute paths that were unchecked.
     """
-
-    # Convert to Path if needed
-    root_path = Path(root_path)
-
-    # If this folder is already ignored from a parent's checkbox, just return
-    if str(root_path.resolve()) in ignore_set:
-        return []
-
+    global checkbox_keys
     ignored_paths = []
-
     try:
         entries = os.listdir(root_path)
         if sort_files:
@@ -87,57 +72,43 @@ def display_directory_tree(root_path, ignore_set, indent=0, sort_files=True):
         st.sidebar.error(f"Error reading directory {root_path}: {e}")
         return []
 
-    # We'll show the folder’s content inside an expander
-    # But first we display a line with an overall folder checkbox + label
-    indent_str = "&nbsp;" * 4 * indent  # Visual indentation in HTML
-    folder_label = f"{indent_str}{root_path.name}/"
+    for entry in entries:
+        full_path = os.path.join(root_path, entry)
+        indent_px = indent * 20
+        if os.path.isdir(full_path):
+            # Set up a session state key to hold the expansion state for this folder
+            expand_key = f"expand_{full_path}"
+            if expand_key not in st.session_state:
+                st.session_state[expand_key] = True  # default: expanded
+            arrow = "▼" if st.session_state[expand_key] else "►"
 
-    # Create a unique key for the folder checkbox to avoid collisions
-    folder_checkbox_key = str(root_path.resolve()) + "_folder_checkbox"
-    checkbox_keys.append(folder_checkbox_key)
-
-    # By default, let's assume folders are checked. You can adjust logic as needed.
-    folder_checked = st.sidebar.checkbox(
-        folder_label,
-        value=True,
-        key=folder_checkbox_key
-    )
-
-    if not folder_checked:
-        # Mark this entire folder (and its subtree) as ignored
-        ignored_paths.append(str(root_path.resolve()))
-        return ignored_paths
-
-    # If folder is checked, show an expander for its children
-    # The label for the expander will have a small arrow. 
-    with st.sidebar.expander(folder_label, expanded=False):
-        # Iterate over items inside this folder
-        for entry in entries:
-            full_path = root_path / entry
-            if full_path.is_dir():
-                # Recursively display subfolder
-                sub_ignored = display_directory_tree(
-                    root_path=full_path,
-                    ignore_set=ignore_set.union(ignored_paths),
-                    indent=indent + 1,
-                    sort_files=sort_files
-                )
-                ignored_paths.extend(sub_ignored)
-            else:
-                # It's a file; show it with a checkbox
-                file_checkbox_key = str(full_path.resolve()) + "_file_checkbox"
-                checkbox_keys.append(file_checkbox_key)
-
-                file_indent_str = "&nbsp;" * 4 * (indent + 1)
-                file_label = f"{file_indent_str}{entry}"
-                file_checked = st.checkbox(
-                    file_label,
-                    value=True,
-                    key=file_checkbox_key
-                )
-                if not file_checked:
-                    ignored_paths.append(str(full_path.resolve()))
-
+            # Render the folder row inside a container that applies left margin
+            with st.sidebar.container():
+                st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
+                # Create two inline columns: one for the toggle arrow and one for the checkbox.
+                cols = st.columns([0.2, 0.8])
+                with cols[0]:
+                    if st.button(arrow, key=f"toggle_{full_path}"):
+                        st.session_state[expand_key] = not st.session_state[expand_key]
+                with cols[1]:
+                    default_value = False if entry in DEFAULT_IGNORED_NAMES else True
+                    if not st.checkbox(f"{entry}/", value=default_value, key=full_path):
+                        ignored_paths.append(os.path.abspath(full_path))
+                st.markdown("</div>", unsafe_allow_html=True)
+            # Only display the children if the folder is expanded.
+            if st.session_state[expand_key]:
+                child_ignored = display_directory_tree(full_path, indent=indent+1, sort_files=sort_files)
+                ignored_paths.extend(child_ignored)
+        else:
+            # Render a file entry with its own left margin.
+            checkbox_key = full_path
+            checkbox_keys.append(checkbox_key)
+            indent_px = indent * 20
+            with st.sidebar.container():
+                st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
+                if not st.checkbox(f"{entry}", value=True, key=checkbox_key):
+                    ignored_paths.append(os.path.abspath(full_path))
+                st.markdown("</div>", unsafe_allow_html=True)
     return ignored_paths
 
 def get_manual_ignore_list(folder_path):
@@ -159,9 +130,11 @@ def get_manual_ignore_list(folder_path):
 
 st.sidebar.title("Directory Snapshot Tool")
 
-# "Select Folder" area
+# "Select Folder" area: Because a native folder picker isn’t available in Streamlit,
+# the user enters a folder path manually.
 folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
 
+# Clear and refresh buttons for the sidebar selections.
 if st.sidebar.button("🗑️ Clear Selections"):
     clear_checkbox_states()
 
@@ -172,7 +145,7 @@ sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
 
 if folder_path and os.path.isdir(folder_path):
     st.sidebar.markdown("### Directory Tree")
-    tree_ignored = display_directory_tree(folder_path, sort_files=sort_files)
+    tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files)
     manual_ignored = get_manual_ignore_list(folder_path)
     final_ignore_list = list(set(tree_ignored + manual_ignored))
 else:
@@ -183,7 +156,7 @@ st.title("Directory Snapshot Tool")
 st.markdown("""
 This tool creates a markdown snapshot of your directory.
 Files and folders that are unchecked in the sidebar will be ignored.
-When you are ready, click the **Generate Snapshot** button below.
+When you are ready, click the **Generate Snapshot** button below!
 """)
 
 if st.button("Generate Snapshot"):

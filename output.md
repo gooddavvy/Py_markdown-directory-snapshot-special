@@ -29,45 +29,15 @@ This is from the author: "He```llo world!"`
 
 ---FILEEND---
 
----FILESTART: outdir_generator.py---
-import os
-from pathlib import Path
+---FILESTART: requirements.txt---
+# Py_markdown-directory-snapshot-special - Minimal requirements file
 
-def generate_outdir(dirname):
-    try:
-        os.makedirs(dirname, exist_ok=True)
-    except Exception as e:
-        raise Exception(f"failed to create directory: {str(e)} (ノಠ益ಠ)ノ彡┻━┻")
+# The primary functionality of this project uses only Python's standard libraries.
+# pytest is included here for testing purposes.
+pytest>=8.3.4
+flask>=3.0.2
+streamlit>=1.29.1
 
-    try:
-        with open("input.md", "r", encoding="utf-8") as f:
-            content = f.read()
-    except Exception as e:
-        raise Exception(f"couldn't read input.md - did you forget to create it? ¯\\_(ツ)_/¯ : {str(e)}")
-
-    # Split content by file markers
-    file_blocks = content.split("---FILESTART: ")
-
-    for block in file_blocks[1:]:  # Skip the first empty block
-        try:
-            # Split into filename and content
-            filename, content = block.split("---\n", 1)
-            filename = filename.strip()
-            
-            # Extract content up to FILEEND marker
-            content = content.split("---FILEEND---")[0]
-
-            full_path = os.path.join(dirname, filename)
-            parent_dir = os.path.dirname(full_path)
-
-            # Create parent directories if they don't exist
-            os.makedirs(parent_dir, exist_ok=True)
-
-            # Write the file
-            with open(full_path, "w", encoding="utf-8") as f:
-                f.write(content)
-        except Exception as e:
-            raise Exception(f"failed to process file {filename}: {str(e)} (╯°□°）╯︵ ┻━┻")
 ---FILEEND---
 
 ---FILESTART: main.py---
@@ -124,174 +94,51 @@ if __name__ == "__main__":
 
 ---FILEEND---
 
----FILESTART: .gitignore---
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-venv
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-
----FILEEND---
-
 ---FILESTART: .gitattributes---
 # Auto detect text files and perform LF normalization
 * text=auto
 
+---FILEEND---
+
+---FILESTART: outdir_generator.py---
+import os
+from pathlib import Path
+
+def generate_outdir(dirname):
+    try:
+        os.makedirs(dirname, exist_ok=True)
+    except Exception as e:
+        raise Exception(f"failed to create directory: {str(e)} (ノಠ益ಠ)ノ彡┻━┻")
+
+    try:
+        with open("input.md", "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception as e:
+        raise Exception(f"couldn't read input.md - did you forget to create it? ¯\\_(ツ)_/¯ : {str(e)}")
+
+    # Split content by file markers
+    file_blocks = content.split("---FILESTART: ")
+
+    for block in file_blocks[1:]:  # Skip the first empty block
+        try:
+            # Split into filename and content
+            filename, content = block.split("---\n", 1)
+            filename = filename.strip()
+            
+            # Extract content up to FILEEND marker
+            content = content.split("---FILEEND---")[0]
+
+            full_path = os.path.join(dirname, filename)
+            parent_dir = os.path.dirname(full_path)
+
+            # Create parent directories if they don't exist
+            os.makedirs(parent_dir, exist_ok=True)
+
+            # Write the file
+            with open(full_path, "w", encoding="utf-8") as f:
+                f.write(content)
+        except Exception as e:
+            raise Exception(f"failed to process file {filename}: {str(e)} (╯°□°）╯︵ ┻━┻")
 ---FILEEND---
 
 ---FILESTART: LICENSE---
@@ -499,18 +346,171 @@ Apache License
 
 ---FILEEND---
 
----FILESTART: requirements.txt---
-# Py_markdown-directory-snapshot-special - Minimal requirements file
-
-# The primary functionality of this project uses only Python's standard libraries.
-# pytest is included here for testing purposes.
-pytest>=8.3.4
-flask>=3.0.2
-streamlit>=1.29.1
+---FILESTART: output.md---
 
 ---FILEEND---
 
----FILESTART: output.md---
+---FILESTART: .gitignore---
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/#use-with-ide
+.pdm.toml
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#.idea/
 
 ---FILEEND---
 
@@ -578,6 +578,189 @@ Replace `desired_output_dirname` with the name of the directory you want to crea
 
 Please let me know (in the [Issues Section](https://github.com/gooddavvy/Py_markdown-directory-snapshot-special/issues)) if you encounter any issues during setup or usage.
 ````
+
+---FILEEND---
+
+---FILESTART: ui.py---
+import os
+import time
+import streamlit as st
+from snapshot_generator import generate_markdown_snapshot
+
+# --- Global variable to track checkbox keys ---
+checkbox_keys = []
+
+# --- Configuration & CSS for Dark Theme ---
+st.set_page_config(
+    page_title="Directory Snapshot Tool",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    page_icon="📸"
+)
+
+st.markdown(
+    """
+    <style>
+    /* Main background */
+    .reportview-container {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+    /* Sidebar background */
+    .sidebar .sidebar-content {
+        background-color: #1e1e1e;
+    }
+    /* Button styling */
+    div.stButton > button {
+        background-color: #1f6aa5;
+        color: white;
+        border: none;
+        padding: 0.5em 1em;
+        border-radius: 4px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- Global Defaults ---
+DEFAULT_IGNORED_NAMES = {".git", "node_modules", "__pycache__", "venv", "dist", "build"}
+
+# --- Helper Functions ---
+
+def clear_checkbox_states():
+    """
+    Clears the session state for all checkboxes by deleting their keys.
+    This forces the checkboxes to revert to their default values.
+    """
+    global checkbox_keys
+    for key in checkbox_keys:
+        if key in st.session_state:
+            del st.session_state[key]
+
+def display_directory_tree(root_path, indent=0, sort_files=True):
+    """
+    Recursively displays a directory tree with checkboxes in the sidebar.
+    Returns a list of absolute paths that were unchecked.
+    """
+    global checkbox_keys
+    ignored_paths = []
+    try:
+        entries = os.listdir(root_path)
+        if sort_files:
+            entries = sorted(entries)
+    except Exception as e:
+        st.sidebar.error(f"Error reading directory {root_path}: {e}")
+        return []
+
+    for entry in entries:
+        full_path = os.path.join(root_path, entry)
+        checkbox_key = full_path
+        checkbox_keys.append(checkbox_key)
+        # Default value: if the entry name is one of the defaults, uncheck it (ignore it)
+        default_value = False if entry in DEFAULT_IGNORED_NAMES else True
+        indent_str = "&nbsp;" * 4 * indent  # for visual indentation in the label
+        label = f"{indent_str}{entry}/" if os.path.isdir(full_path) else f"{indent_str}{entry}"
+        checked = st.sidebar.checkbox(label, value=default_value, key=checkbox_key)
+        if not checked:
+            ignored_paths.append(os.path.abspath(full_path))
+        if os.path.isdir(full_path):
+            with st.sidebar.expander(f"{indent_str}Contents of {entry}"):
+                child_ignored = display_directory_tree(full_path, indent=indent+1, sort_files=sort_files)
+                ignored_paths.extend(child_ignored)
+    return ignored_paths
+
+def get_manual_ignore_list(folder_path):
+    """
+    Returns a list of additional ignore patterns entered manually by the user.
+    If a pattern is not an absolute path, it is assumed to be relative to folder_path.
+    """
+    manual_input = st.sidebar.text_area("Manual Ignore Patterns (one per line)", height=100)
+    manual_patterns = [line.strip() for line in manual_input.splitlines() if line.strip()]
+    ignore_list = []
+    for pattern in manual_patterns:
+        if os.path.isabs(pattern):
+            ignore_list.append(os.path.abspath(pattern))
+        else:
+            ignore_list.append(os.path.abspath(os.path.join(folder_path, pattern)))
+    return ignore_list
+
+# --- Sidebar Controls ---
+
+st.sidebar.title("Directory Snapshot Tool")
+
+# "Select Folder" area: Because a native folder picker isn’t available in Streamlit,
+# the user enters a folder path manually.
+folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
+
+# Updated: Use full-width buttons by not placing them in columns.
+if st.sidebar.button("🗑️ Clear Selections"):
+    clear_checkbox_states()
+
+if st.sidebar.button("🔄 Refresh Tree"):
+    clear_checkbox_states()
+
+sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
+
+
+if folder_path and os.path.isdir(folder_path):
+    st.sidebar.markdown("### Directory Tree")
+    tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files)
+    manual_ignored = get_manual_ignore_list(folder_path)
+    final_ignore_list = list(set(tree_ignored + manual_ignored))
+else:
+    st.sidebar.info("Please enter a valid folder path above.")
+
+# --- Main Content Area ---
+st.title("Directory Snapshot Tool")
+st.markdown("""
+This tool creates a markdown snapshot of your directory.
+Files and folders that are unchecked in the sidebar will be ignored.
+When you are ready, click the **Generate Snapshot** button below.
+""")
+
+if st.button("Generate Snapshot"):
+    if not folder_path or not os.path.isdir(folder_path):
+        st.error("Please provide a valid folder path before generating a snapshot.")
+    else:
+        with st.spinner("Generating snapshot..."):
+            try:
+                generate_markdown_snapshot(folder_path, final_ignore_list)
+                time.sleep(0.5)
+                st.success("Snapshot created successfully!")
+                try:
+                    with open("output.md", "r", encoding="utf-8") as f:
+                        snapshot_content = f.read()
+                    st.markdown("#### Snapshot (output.md):")
+                    st.code(snapshot_content, language="markdown")
+                except Exception as e:
+                    st.error(f"Snapshot was generated but there was an error reading 'output.md': {e}")
+            except Exception as e:
+                st.error(f"Error generating snapshot: {e}")
+
+with st.expander("About / Instructions"):
+    st.markdown("""
+    **Usage Instructions:**
+    
+    1. **Select Folder:**  
+       Enter the absolute (or relative) path of the directory you want to snapshot.
+       
+    2. **Directory Tree:**  
+       Use the checkboxes in the sidebar to select which files and folders to include.  
+       *Unchecked items will be ignored in the snapshot.*  
+       The default ignored items are: `.git`, `node_modules`, `__pycache__`, `venv`, `dist`, `build`.
+       
+    3. **Manual Ignore Patterns:**  
+       Enter additional ignore patterns (one per line). Non‐absolute patterns will be treated as relative to the selected folder.
+       
+    4. **Generate Snapshot:**  
+       Click the **Generate Snapshot** button to create an `output.md` file containing your snapshot.
+       
+    **Note:**  
+    If you encounter any issues (e.g. permissions or file access errors), please check that the folder path is correct and that you have read access to the files.
+    """)
+
+st.markdown("© 2025 Py_markdown-directory-snapshot-special")
 
 ---FILEEND---
 
@@ -656,6 +839,10 @@ def generate_markdown_snapshot(root_path, ignore_list, max_workers=8):
                     output_file.write(result)
 ---FILEEND---
 
+---FILESTART: test_directory\ignore_this_directory\hello_world.txt---
+This is from the author: "Hello world!"
+---FILEEND---
+
 ---FILESTART: test_directory\hello_world.js---
 console.log("This is from the author:")
 console.log("Hello world!")
@@ -671,9 +858,5 @@ Don't you dare look at my contained contents!
 
 ---FILESTART: test_directory\ignore_this_file.txt---
 Don't you dare look at my contained contents!
----FILEEND---
-
----FILESTART: test_directory\ignore_this_directory\hello_world.txt---
-This is from the author: "Hello world!"
 ---FILEEND---
 

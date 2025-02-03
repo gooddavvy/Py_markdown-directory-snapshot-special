@@ -57,6 +57,9 @@ def clear_checkbox_states():
 def display_directory_tree(root_path, indent=0, sort_files=True):
     """
     Recursively displays a directory tree with checkboxes in the sidebar.
+    Each folder is rendered with a toggleable arrow (► when collapsed, ▼ when expanded)
+    so that its contents can be hidden or shown.
+    
     Returns a list of absolute paths that were unchecked.
     """
     global checkbox_keys
@@ -71,19 +74,41 @@ def display_directory_tree(root_path, indent=0, sort_files=True):
 
     for entry in entries:
         full_path = os.path.join(root_path, entry)
-        checkbox_key = full_path
-        checkbox_keys.append(checkbox_key)
-        # Default value: if the entry name is one of the defaults, uncheck it (ignore it)
-        default_value = False if entry in DEFAULT_IGNORED_NAMES else True
-        indent_str = "&nbsp;" * 4 * indent  # for visual indentation in the label
-        label = f"{indent_str}{entry}/" if os.path.isdir(full_path) else f"{indent_str}{entry}"
-        checked = st.sidebar.checkbox(label, value=default_value, key=checkbox_key)
-        if not checked:
-            ignored_paths.append(os.path.abspath(full_path))
+        indent_px = indent * 20
         if os.path.isdir(full_path):
-            with st.sidebar.expander(f"{indent_str}Contents of {entry}"):
+            # Set up a session state key to hold the expansion state for this folder
+            expand_key = f"expand_{full_path}"
+            if expand_key not in st.session_state:
+                st.session_state[expand_key] = True  # default: expanded
+            arrow = "▼" if st.session_state[expand_key] else "►"
+
+            # Render the folder row inside a container that applies left margin
+            with st.sidebar.container():
+                st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
+                # Create two inline columns: one for the toggle arrow and one for the checkbox.
+                cols = st.columns([0.2, 0.8])
+                with cols[0]:
+                    if st.button(arrow, key=f"toggle_{full_path}"):
+                        st.session_state[expand_key] = not st.session_state[expand_key]
+                with cols[1]:
+                    default_value = False if entry in DEFAULT_IGNORED_NAMES else True
+                    if not st.checkbox(f"{entry}/", value=default_value, key=full_path):
+                        ignored_paths.append(os.path.abspath(full_path))
+                st.markdown("</div>", unsafe_allow_html=True)
+            # Only display the children if the folder is expanded.
+            if st.session_state[expand_key]:
                 child_ignored = display_directory_tree(full_path, indent=indent+1, sort_files=sort_files)
                 ignored_paths.extend(child_ignored)
+        else:
+            # Render a file entry with its own left margin.
+            checkbox_key = full_path
+            checkbox_keys.append(checkbox_key)
+            indent_px = indent * 20
+            with st.sidebar.container():
+                st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
+                if not st.checkbox(f"{entry}", value=True, key=checkbox_key):
+                    ignored_paths.append(os.path.abspath(full_path))
+                st.markdown("</div>", unsafe_allow_html=True)
     return ignored_paths
 
 def get_manual_ignore_list(folder_path):
@@ -109,7 +134,7 @@ st.sidebar.title("Directory Snapshot Tool")
 # the user enters a folder path manually.
 folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
 
-# Updated: Use full-width buttons by not placing them in columns.
+# Clear and refresh buttons for the sidebar selections.
 if st.sidebar.button("🗑️ Clear Selections"):
     clear_checkbox_states()
 
@@ -117,7 +142,6 @@ if st.sidebar.button("🔄 Refresh Tree"):
     clear_checkbox_states()
 
 sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
-
 
 if folder_path and os.path.isdir(folder_path):
     st.sidebar.markdown("### Directory Tree")
@@ -132,7 +156,7 @@ st.title("Directory Snapshot Tool")
 st.markdown("""
 This tool creates a markdown snapshot of your directory.
 Files and folders that are unchecked in the sidebar will be ignored.
-When you are ready, click the **Generate Snapshot** button below.
+When you are ready, click the **Generate Snapshot** button below!
 """)
 
 if st.button("Generate Snapshot"):
@@ -157,21 +181,21 @@ if st.button("Generate Snapshot"):
 with st.expander("About / Instructions"):
     st.markdown("""
     **Usage Instructions:**
-    
+
     1. **Select Folder:**  
        Enter the absolute (or relative) path of the directory you want to snapshot.
-       
+
     2. **Directory Tree:**  
        Use the checkboxes in the sidebar to select which files and folders to include.  
        *Unchecked items will be ignored in the snapshot.*  
        The default ignored items are: `.git`, `node_modules`, `__pycache__`, `venv`, `dist`, `build`.
-       
+
     3. **Manual Ignore Patterns:**  
        Enter additional ignore patterns (one per line). Non‐absolute patterns will be treated as relative to the selected folder.
-       
+
     4. **Generate Snapshot:**  
        Click the **Generate Snapshot** button to create an `output.md` file containing your snapshot.
-       
+
     **Note:**  
     If you encounter any issues (e.g. permissions or file access errors), please check that the folder path is correct and that you have read access to the files.
     """)

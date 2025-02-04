@@ -10,17 +10,17 @@ In your terminal, navigate to the directory where you want to apply this project
 
 ```bash
 git clone https://github.com/gooddavvy/Py_markdown-directory-snapshot-special
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
-Be sure to replace `your-module-name` with your actual module name.
+By the way, if you're on a Windows machine and only `py` works, please use `py -3` instead of `python` in the command.
 
 ## Creating a Snapshot 📸
 
 To create a snapshot of your directory:
 
 ```bash
-python main.py snapshot [your_absolute_path] [ignore_patterns...]
+python3 main.py snapshot [your_absolute_path] [ignore_patterns...]
 ```
 
 Replace `your_absolute_path` with the absolute path to the directory you want to snapshot, and `ignore_patterns` with the absolute paths of the files/directories you want to ignore.
@@ -28,8 +28,10 @@ Replace `your_absolute_path` with the absolute path to the directory you want to
 Example:
 
 ```bash
-python main.py snapshot "C:\Users\davvy\Desktop\test" "C:\Users\davvy\Desktop\test\ignore_this_file.txt" "C:\Users\davvy\Desktop\test\ignore_this_directory"
+python3 main.py snapshot "C:\Users\davvy\Desktop\test" "C:\Users\davvy\Desktop\test\ignore_this_file.txt" "C:\Users\davvy\Desktop\test\ignore_this_directory"
 ```
+
+Again, if you're on a Windows machine and only `py` works for you, make sure to use `py -3` instead of `python3` in the command.
 
 An `output.md` file will be created at the root level of this project, containing a snapshot of non-ignored files and their contents.
 
@@ -51,31 +53,47 @@ To recreate a directory structure from a snapshot:
 
 1. First, ensure you have an `input.md` file at the root level of the project. This file should follow the format:
 
-````markdown
-### path/to/your/file.ext
-
-```content
+```markdown
+---FILESTART: path/to/your/file.ext---
 Your file contents here
-```
-````
+---FILEEND---
 
-### another/file.ext
-
-```content
+---FILESTART: another/file.ext---
 More file contents
+---FILEEND---
 ```
 
-````
+Basically, the same format as the `output.md` snapshot file.
 
 2. Then run:
+
 ```bash
-python main.py outdir [desired_output_dirname]
+python3 main.py outdir [desired_output_dirname]
 ```
 
-Replace `desired_output_dirname` with the name of the directory you want to create. The program will:
+Again, if you're on a Windows machine and only `py` works for you, make sure to use `py -3` instead of `python3` in the command.
+
+Replace `desired_output_dirname` with the name of the directory you want to create.
+
+Example:
+
+```bash
+python3 main.py outdir "C:\Users\davvy\Desktop\test"
+```
+
+or
+
+```bash
+py -3 main.py outdir "C:\Users\davvy\Desktop\test" # if you're on a Windows machine and only `py` works for you
+```
+
+The program will:
 
 - Create the directory and all necessary subdirectories
 - Generate all files with their contents as specified in `input.md` 🎯
 
-Please let me know (in the [Issues Section](https://github.com/gooddavvy/Py_markdown-directory-snapshot-special/issues)) if you encounter any issues during setup or usage.
-````
+**Note: Our UI currently does not support recreating from a snapshot. If you're desperate for this UI feature, please let us know (in the [Issues Section](https://github.com/gooddavvy/Py_markdown-directory-snapshot-special/issues)) and we'll try to implement it.**
+
+---
+
+Please let us know (in the [Issues Section](https://github.com/gooddavvy/Py_markdown-directory-snapshot-special/issues)) if you encounter any issues during setup or usage.

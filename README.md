@@ -27,6 +27,18 @@ Replace `your_absolute_path` with the absolute path to the directory you want to
 
 An `output.md` file will be created at the root level of this project, containing a snapshot of non-ignored files and their contents.
 
+**Alternatively, if you want to use our UI, run the following command to launch our Streamlit app (instructions to use it will be shown there):**
+
+```bash
+python3 -m streamlit run ui.py --port 5000
+```
+
+If you are on a Windows machine and only `py` works for you, run the following command instead:
+
+```bash
+py -3 -m streamlit run ui.py --port 5000
+```
+
 ## Recreating from a Snapshot 🎨
 
 To recreate a directory structure from a snapshot:

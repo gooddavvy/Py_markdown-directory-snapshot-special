@@ -2,7 +2,7 @@ import os
 import time
 import streamlit as st
 from snapshot_generator import generate_markdown_snapshot
-
+from token_counter import count_tokens
 # --- Global variable to track checkbox keys ---
 checkbox_keys = []
 
@@ -242,7 +242,7 @@ if st.button("Generate Snapshot"):
                 # Append the side text if provided
                 if side_text:
                     with open("output.md", "a", encoding="utf-8") as f:
-                        f.write("\n\n===============================\n\n")
+                        f.write("\n\n==========================================================\n\n")
                         f.write(side_text)
                 
                 time.sleep(0.5)
@@ -250,8 +250,8 @@ if st.button("Generate Snapshot"):
                 try:
                     with open("output.md", "r", encoding="utf-8") as f:
                         snapshot_content = f.read()
-                    st.markdown("#### Snapshot (output.md):")
-                    st.code(snapshot_content, language="markdown")
+                    st.markdown(f"> The following snapshot contains {count_tokens(snapshot_content)} AI natural language tokens \n#### Snapshot (output.md):")
+                    st.code(snapshot_content, language="txt")
                 except Exception as e:
                     st.error(f"Snapshot was generated but there was an error reading 'output.md': {e}")
             except Exception as e:

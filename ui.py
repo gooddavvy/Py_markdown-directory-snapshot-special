@@ -51,6 +51,8 @@ st.markdown(
 
 # --- Global Defaults ---
 DEFAULT_IGNORED_NAMES = {".git", "node_modules", "__pycache__", "venv", "dist", "build"}
+INDENT_MULTIPLIER = 2
+
 
 # --- Helper Functions ---
 
@@ -76,10 +78,11 @@ def display_directory_tree(root_path, indent=0, sort_files=True, parent_checked=
         sort_files: Whether to sort entries alphabetically
         parent_checked: Whether the parent folder is checked
     
-    Returns a list of absolute paths that were unchecked.
+    Returns a list of absolute paths that are unchecked.
     """
     global checkbox_keys
     ignored_paths = []
+
     try:
         entries = os.listdir(root_path)
         if sort_files:
@@ -90,58 +93,89 @@ def display_directory_tree(root_path, indent=0, sort_files=True, parent_checked=
 
     for entry in entries:
         full_path = os.path.join(root_path, entry)
-        indent_px = indent * 20
-        if os.path.isdir(full_path):
-            # Set up a session state key to hold the expansion state for this folder
+        is_folder = os.path.isdir(full_path)
+
+        # Create an expand key for folders so we know if they're expanded or collapsed
+        if is_folder:
             expand_key = f"expand_{full_path}"
             if expand_key not in st.session_state:
                 st.session_state[expand_key] = True  # default: expanded
             arrow = "▼" if st.session_state[expand_key] else "►"
+        else:
+            arrow = ""  # No arrow for files
 
-            # Render the folder row inside a container that applies left margin
-            with st.sidebar.container():
-                st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
-                # Create two inline columns: one for the toggle arrow and one for the checkbox.
-                cols = st.columns([0.2, 0.8])
-                with cols[0]:
+        # We'll produce either 2 or 3 columns:
+        # - If indent > 0, the first column is our "spacer".
+        # - The second column is for the arrow or an empty string (for files).
+        # - The third column is the checkbox for the file/folder name.
+        if indent > 0:
+            # Indent must be positive, so we create a "spacer" column, arrow column, and checkbox column
+            spacer_col, arrow_col, check_col = st.sidebar.columns([indent * 0.3, 0.15, 0.85])
+        else:
+            # If indent == 0, we just have arrow and checkbox columns (no need for spacer)
+            arrow_col, check_col = st.sidebar.columns([0.15, 0.85])
+
+        # 1) Arrow Button Column
+        if indent > 0:
+            with arrow_col:
+                if arrow:
+                    # Click toggles expansion state
                     if st.button(arrow, key=f"toggle_{full_path}"):
                         st.session_state[expand_key] = not st.session_state[expand_key]
-                with cols[1]:
-                    default_value = False if entry in DEFAULT_IGNORED_NAMES else True
-                    # If parent is unchecked, force this folder to be unchecked
-                    if not parent_checked:
-                        folder_checked = False
-                    else:
-                        folder_checked = st.checkbox(f"{entry}/", value=default_value, key=full_path)
-                    
-                    if not folder_checked:
-                        ignored_paths.append(os.path.abspath(full_path))
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            # Only display the children if the folder is expanded
-            if st.session_state[expand_key]:
-                # Pass the parent's checked state to children
-                child_ignored = display_directory_tree(full_path, indent=indent+1, 
-                                                     sort_files=sort_files, 
-                                                     parent_checked=folder_checked)
-                ignored_paths.extend(child_ignored)
         else:
-            # Render a file entry with its own left margin
-            checkbox_key = full_path
-            checkbox_keys.append(checkbox_key)
-            indent_px = indent * 20
-            with st.sidebar.container():
-                st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
-                # If parent is unchecked, force this file to be unchecked
-                if not parent_checked:
-                    file_checked = False
-                    st.checkbox(f"{entry}", value=False, key=checkbox_key, disabled=True)
+            # indent=0, so we only have arrow_col and check_col
+            with arrow_col:
+                if arrow:
+                    if st.button(arrow, key=f"toggle_{full_path}"):
+                        st.session_state[expand_key] = not st.session_state[expand_key]
+
+        # 2) Checkbox Column
+        if indent > 0:
+            with check_col:
+                default_value = False if entry in DEFAULT_IGNORED_NAMES else True
+                if parent_checked:
+                    item_checked = st.checkbox(
+                        f"{entry}/" if is_folder else f"{entry}",
+                        value=default_value,
+                        key=full_path
+                    )
                 else:
-                    file_checked = st.checkbox(f"{entry}", value=True, key=checkbox_key)
-                
-                if not file_checked:
-                    ignored_paths.append(os.path.abspath(full_path))
-                st.markdown("</div>", unsafe_allow_html=True)
+                    # Parent is unchecked, so disable
+                    st.checkbox(
+                        f"{entry}/" if is_folder else f"{entry}",
+                        value=False,
+                        key=full_path,
+                        disabled=True
+                    )
+                    item_checked = False
+        else:
+            with check_col:
+                default_value = False if entry in DEFAULT_IGNORED_NAMES else True
+                if parent_checked:
+                    item_checked = st.checkbox(
+                        f"{entry}/" if is_folder else f"{entry}",
+                        value=default_value,
+                        key=full_path
+                    )
+                else:
+                    st.checkbox(f"{entry}/" if is_folder else f"{entry}",
+                                value=False, key=full_path, disabled=True)
+                    item_checked = False
+
+        # Record this path in ignored_paths if it was unchecked
+        if not item_checked:
+            ignored_paths.append(os.path.abspath(full_path))
+
+        # If it's a folder and expanded, recurse:
+        if is_folder and arrow and st.session_state[expand_key]:
+            child_ignored = display_directory_tree(
+                full_path,
+                indent=indent + 1,
+                sort_files=sort_files,
+                parent_checked=item_checked
+            )
+            ignored_paths.extend(child_ignored)
+
     return ignored_paths
 
 def get_manual_ignore_list(folder_path):

@@ -6,11 +6,16 @@ __pycache__/
 # C extensions
 *.so
 
+# Input and output files
+input.md
+output.md
+
 # Distribution / packaging
 .Python
 build/
 develop-eggs/
 dist/
+
 downloads/
 eggs/
 .eggs/

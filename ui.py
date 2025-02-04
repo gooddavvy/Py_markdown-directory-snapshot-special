@@ -183,7 +183,7 @@ def get_manual_ignore_list(folder_path):
     Returns a list of additional ignore patterns entered manually by the user.
     If a pattern is not an absolute path, it is assumed to be relative to folder_path.
     """
-    manual_input = st.sidebar.text_area("Manual Ignore Patterns (one per line)", height=100)
+    manual_input = st.sidebar.text_area("Manual Ignore Patterns (*optional*, one per line)", height=100)
     manual_patterns = [line.strip() for line in manual_input.splitlines() if line.strip()]
     ignore_list = []
     for pattern in manual_patterns:
@@ -199,7 +199,8 @@ st.sidebar.markdown("Directory Snapshot Tool <span class='beta-badge'>BETA</span
 
 # "Select Folder" area: Because a native folder picker isn't available in Streamlit,
 # the user enters a folder path manually.
-folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
+folder_path = st.sidebar.text_input("Enter your absolute directory path", value="", placeholder="e.g., /home/user/my_project")
+
 
 # Clear and refresh buttons for the sidebar selections.
 if st.sidebar.button("🗑️ Clear Selections"):
@@ -211,12 +212,12 @@ if st.sidebar.button("🔄 Refresh Tree"):
 sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
 
 if folder_path and os.path.isdir(folder_path):
-    st.sidebar.markdown("### Directory Tree")
+    st.sidebar.markdown("## Directory Tree")
     tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files, parent_checked=True)
     manual_ignored = get_manual_ignore_list(folder_path)
     final_ignore_list = list(set(tree_ignored + manual_ignored))
 else:
-    st.sidebar.info("Please enter a valid folder path above.")
+    st.sidebar.info("Please enter a valid absolute directory path above.")
 
 # --- Main Content Area ---
 st.markdown("# Directory Snapshot Tool <span class='beta-badge'>BETA</span>", unsafe_allow_html=True)
@@ -226,13 +227,24 @@ Files and folders that are unchecked in the sidebar will be ignored.
 When you are ready, click the **Generate Snapshot** button below!
 """)
 
+# Add text area for side notes
+side_text = st.text_area("Add notes to append to the snapshot (*optional*)", height=100, help="This text will appear at the end of your snapshot")
+
 if st.button("Generate Snapshot"):
     if not folder_path or not os.path.isdir(folder_path):
         st.error("Please provide a valid folder path before generating a snapshot.")
     else:
         with st.spinner("Generating snapshot..."):
             try:
+                # Generate the basic snapshot
                 generate_markdown_snapshot(folder_path, final_ignore_list)
+                
+                # Append the side text if provided
+                if side_text:
+                    with open("output.md", "a", encoding="utf-8") as f:
+                        f.write("\n\n===============================\n\n")
+                        f.write(side_text)
+                
                 time.sleep(0.5)
                 st.success("Snapshot created successfully!")
                 try:
@@ -249,15 +261,16 @@ with st.expander("About / Instructions"):
     st.markdown("""
     **Usage Instructions:**
 
-    1. **Select Folder:**  
-       Enter the absolute (or relative) path of the directory you want to snapshot.
+    1. **Select Directory:**  
+       Enter the absolute path of the directory you want to snapshot.
+
 
     2. **Directory Tree:**  
        Use the checkboxes in the sidebar to select which files and folders to include.  
        *Unchecked items will be ignored in the snapshot.*  
        The default ignored items are: `.git`, `node_modules`, `__pycache__`, `venv`, `dist`, `build`.
 
-    3. **Manual Ignore Patterns:**  
+    3. **Manual Ignore Patterns (*optional*):**  
        Enter additional ignore patterns (one per line). Non‐absolute patterns will be treated as relative to the selected folder.
 
     4. **Generate Snapshot:**  

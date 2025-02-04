@@ -10,11 +10,15 @@ __pycache__/
 input.md
 output.md
 
+# Webm videos
+streamlit-ui-demo1.webm
+
 # Distribution / packaging
 .Python
 build/
 develop-eggs/
 dist/
+
 
 downloads/
 eggs/

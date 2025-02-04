@@ -34,6 +34,16 @@ st.markdown(
         padding: 0.5em 1em;
         border-radius: 4px;
     }
+    /* BETA badge styling */
+    .beta-badge {
+        background: linear-gradient(45deg, #4b6eff, #ff4b4b);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        margin-left: 8px;
+        font-weight: bold;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -54,11 +64,17 @@ def clear_checkbox_states():
         if key in st.session_state:
             del st.session_state[key]
 
-def display_directory_tree(root_path, indent=0, sort_files=True):
+def display_directory_tree(root_path, indent=0, sort_files=True, parent_checked=True):
     """
     Recursively displays a directory tree with checkboxes in the sidebar.
     Each folder is rendered with a toggleable arrow (► when collapsed, ▼ when expanded)
     so that its contents can be hidden or shown.
+    
+    Args:
+        root_path: The path to display
+        indent: Current indentation level
+        sort_files: Whether to sort entries alphabetically
+        parent_checked: Whether the parent folder is checked
     
     Returns a list of absolute paths that were unchecked.
     """
@@ -92,21 +108,38 @@ def display_directory_tree(root_path, indent=0, sort_files=True):
                         st.session_state[expand_key] = not st.session_state[expand_key]
                 with cols[1]:
                     default_value = False if entry in DEFAULT_IGNORED_NAMES else True
-                    if not st.checkbox(f"{entry}/", value=default_value, key=full_path):
+                    # If parent is unchecked, force this folder to be unchecked
+                    if not parent_checked:
+                        folder_checked = False
+                    else:
+                        folder_checked = st.checkbox(f"{entry}/", value=default_value, key=full_path)
+                    
+                    if not folder_checked:
                         ignored_paths.append(os.path.abspath(full_path))
                 st.markdown("</div>", unsafe_allow_html=True)
-            # Only display the children if the folder is expanded.
+
+            # Only display the children if the folder is expanded
             if st.session_state[expand_key]:
-                child_ignored = display_directory_tree(full_path, indent=indent+1, sort_files=sort_files)
+                # Pass the parent's checked state to children
+                child_ignored = display_directory_tree(full_path, indent=indent+1, 
+                                                     sort_files=sort_files, 
+                                                     parent_checked=folder_checked)
                 ignored_paths.extend(child_ignored)
         else:
-            # Render a file entry with its own left margin.
+            # Render a file entry with its own left margin
             checkbox_key = full_path
             checkbox_keys.append(checkbox_key)
             indent_px = indent * 20
             with st.sidebar.container():
                 st.markdown(f"<div style='margin-left: {indent_px}px'>", unsafe_allow_html=True)
-                if not st.checkbox(f"{entry}", value=True, key=checkbox_key):
+                # If parent is unchecked, force this file to be unchecked
+                if not parent_checked:
+                    file_checked = False
+                    st.checkbox(f"{entry}", value=False, key=checkbox_key, disabled=True)
+                else:
+                    file_checked = st.checkbox(f"{entry}", value=True, key=checkbox_key)
+                
+                if not file_checked:
                     ignored_paths.append(os.path.abspath(full_path))
                 st.markdown("</div>", unsafe_allow_html=True)
     return ignored_paths
@@ -128,9 +161,9 @@ def get_manual_ignore_list(folder_path):
 
 # --- Sidebar Controls ---
 
-st.sidebar.title("Directory Snapshot Tool")
+st.sidebar.markdown("Directory Snapshot Tool <span class='beta-badge'>BETA</span>", unsafe_allow_html=True)
 
-# "Select Folder" area: Because a native folder picker isn’t available in Streamlit,
+# "Select Folder" area: Because a native folder picker isn't available in Streamlit,
 # the user enters a folder path manually.
 folder_path = st.sidebar.text_input("Enter the folder path", value="", placeholder="e.g., /home/user/my_project")
 
@@ -145,14 +178,14 @@ sort_files = st.sidebar.checkbox("Sort files A-Z", value=True)
 
 if folder_path and os.path.isdir(folder_path):
     st.sidebar.markdown("### Directory Tree")
-    tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files)
+    tree_ignored = display_directory_tree(folder_path, indent=0, sort_files=sort_files, parent_checked=True)
     manual_ignored = get_manual_ignore_list(folder_path)
     final_ignore_list = list(set(tree_ignored + manual_ignored))
 else:
     st.sidebar.info("Please enter a valid folder path above.")
 
 # --- Main Content Area ---
-st.title("Directory Snapshot Tool")
+st.markdown("# Directory Snapshot Tool <span class='beta-badge'>BETA</span>", unsafe_allow_html=True)
 st.markdown("""
 This tool creates a markdown snapshot of your directory.
 Files and folders that are unchecked in the sidebar will be ignored.

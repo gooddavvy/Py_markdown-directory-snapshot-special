@@ -25,6 +25,12 @@ python main.py snapshot [your_absolute_path] [ignore_patterns...]
 
 Replace `your_absolute_path` with the absolute path to the directory you want to snapshot, and `ignore_patterns` with the absolute paths of the files/directories you want to ignore.
 
+Example:
+
+```bash
+python main.py snapshot "C:\Users\davvy\Desktop\test" "C:\Users\davvy\Desktop\test\ignore_this_file.txt" "C:\Users\davvy\Desktop\test\ignore_this_directory"
+```
+
 An `output.md` file will be created at the root level of this project, containing a snapshot of non-ignored files and their contents.
 
 **Alternatively, if you want to use our UI, run the following command to launch our Streamlit app (instructions to use it will be shown there):**

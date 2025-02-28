@@ -1,3 +1,6 @@
+> [!WARNING]
+> ***This project is to be deprecated, and the experimental UI version is very non-functional.*** Please use the enhanced, ElectronJS-based version of this project, [Flagship Directory Snapshot Tool](https://github.com/auzuma/flagship-directory-snapshot-tool). Thank you for your understanding!
+
 # Py_markdown-directory-snapshot-special
 
 Description: Snapshot a directory & save non-excluded results of snapshot in an output.md file | Create a directory from the snapshot in an input.md file
@@ -97,3 +100,6 @@ The program will:
 ---
 
 Please let us know (in the [Issues Section](https://github.com/gooddavvy/Py_markdown-directory-snapshot-special/issues)) if you encounter any issues during setup or usage.
+
+> [!WARNING]
+> ***This project is to be deprecated, and the experimental UI version is very non-functional.*** Please use the enhanced, ElectronJS-based version of this project, [Flagship Directory Snapshot Tool](https://github.com/auzuma/flagship-directory-snapshot-tool). Thank you for your understanding!
